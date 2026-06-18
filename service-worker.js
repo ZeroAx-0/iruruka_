@@ -1,4 +1,4 @@
-const CACHE_NAME = "iruluka-v2"; // バージョン上げる（古いキャッシュ一掃）
+const CACHE_NAME = "iruluka-v3"; // バージョン上げる（古いキャッシュ一掃）
 
 self.addEventListener("install", event => {
   event.waitUntil(
