@@ -8,7 +8,7 @@ self.addEventListener("install", event => {
       // コアファイルを先にキャッシュ
       await cache.addAll([
         "./",
-        "./iruluka.html",
+        "./index.html",
         "./monsters_merged.json",
         "./manifest.json",
         "./icons/icon-192.png",
