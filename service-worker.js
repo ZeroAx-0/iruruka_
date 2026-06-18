@@ -17,7 +17,7 @@ self.addEventListener("install", event => {
 
       // 画像は1枚失敗してもクラッシュしないよう個別に
       try {
-        const res = await cache.match("./monsters_merged.json");
+        const res = await fetch("./monsters_merged.json");
         const monsters = await res.json();
         const images = monsters.map(m => m.icon).filter(Boolean);
 
