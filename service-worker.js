@@ -1,11 +1,10 @@
-const CACHE_NAME = "iruluka-v3"; // バージョン上げる（古いキャッシュ一掃）
+const CACHE_NAME = "iruluka-v4";
 
 self.addEventListener("install", event => {
   event.waitUntil(
     (async () => {
       const cache = await caches.open(CACHE_NAME);
-
-      // コアファイルを先にキャッシュ
+      // コアファイルだけ（軽い）
       await cache.addAll([
         "./",
         "./index.html",
@@ -14,21 +13,31 @@ self.addEventListener("install", event => {
         "./icons/icon-192.png",
         "./icons/icon-512.png"
       ]);
+      await self.skipWaiting();
+    })()
+  );
+});
 
-      // 画像は1枚失敗してもクラッシュしないよう個別に
-      try {
-        const res = await fetch("./monsters_merged.json");
-        const monsters = await res.json();
-        const images = monsters.map(m => m.icon).filter(Boolean);
+self.addEventListener("activate", event => {
+  event.waitUntil(
+    (async () => {
+      // 古いキャッシュ削除
+      const keys = await caches.keys();
+      await Promise.all(keys.map(k => k !== CACHE_NAME && caches.delete(k)));
+      await self.clients.claim();
 
-        await Promise.allSettled( // addAllではなくallSettled
-          images.map(img => cache.add(img).catch(() => {}))
-        );
-      } catch (e) {
-        console.error("画像キャッシュ失敗:", e);
+      // ここで画像を少しずつバックグラウンドキャッシュ
+      const cache = await caches.open(CACHE_NAME);
+      const res = await cache.match("./monsters_merged.json");
+      const monsters = await res.json();
+      const images = monsters.map(m => m.icon).filter(Boolean);
+
+      const BATCH_SIZE = 20;
+      for (let i = 0; i < images.length; i += BATCH_SIZE) {
+        const batch = images.slice(i, i + BATCH_SIZE);
+        await Promise.allSettled(batch.map(img => cache.add(img).catch(() => {})));
       }
-
-      await self.skipWaiting(); // ← async内の最後に移動！
+      console.log("画像キャッシュ完了:", images.length);
     })()
   );
 });
