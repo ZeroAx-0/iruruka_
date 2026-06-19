@@ -1,4 +1,4 @@
-const CACHE_NAME = "iruluka-v4";
+const CACHE_NAME = "iruluka-v5";
 
 self.addEventListener("install", event => {
   event.waitUntil(
@@ -38,6 +38,27 @@ self.addEventListener("activate", event => {
         await Promise.allSettled(batch.map(img => cache.add(img).catch(() => {})));
       }
       console.log("画像キャッシュ完了:", images.length);
+    })()
+  );
+});
+
+self.addEventListener("fetch", event => {
+  event.respondWith(
+    (async () => {
+      const cached = await caches.match(event.request);
+      if (cached) return cached;
+
+      try {
+        return await fetch(event.request);
+      } catch (e) {
+        // オフラインでキャッシュにもない場合
+        // ナビゲーション（ページ遷移）ならindex.htmlを返す
+        if (event.request.mode === "navigate") {
+          return caches.match("./index.html");
+        }
+        // それ以外は空レスポンスで握りつぶす
+        return new Response("", { status: 408, statusText: "Offline" });
+      }
     })()
   );
 });
