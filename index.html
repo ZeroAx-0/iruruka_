@@ -1266,9 +1266,9 @@ switchTab = function(tab, btn) {
   localStorage.setItem('lastTab', tab);
 };
 
-const _origShowCard = showCard;
-showCard = function(url) {
-  _origShowCard(url);
+const _origSelectMonster = selectMonster;
+selectMonster = function(url, addHistory=true) {
+  _origSelectMonster(url, addHistory);
   localStorage.setItem('lastMonster', url);
 };
 
@@ -1290,11 +1290,11 @@ window.addEventListener('load', () => {
   }
 
   if (lastMonster) {
-    // データ読み込み完了後に復元（少し待つ）
+    // データ読み込み完了後に復元
     const tryRestore = setInterval(() => {
       if (monsters.length > 0) {
         clearInterval(tryRestore);
-        showCard(lastMonster);
+        selectMonster(lastMonster, false);
       }
     }, 100);
   }
