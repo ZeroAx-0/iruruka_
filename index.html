@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#111827">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="イルルカSP">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>イルルカSP 配合チャート</title>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@400;700&family=Noto+Sans+JP:wght@300;400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="tabs">
+  <button class="tab-btn active" onclick="switchTab('search',this)">🔍 配合検索</button>
+  <button class="tab-btn" onclick="switchTab('list',this)">📋 モンスター一覧</button>
+  <button class="tab-btn" id="fav-tab-btn" onclick="switchTab('favorites',this)">⭐ お気に入り</button>
+  <button class="tab-btn" onclick="switchTab('mychart',this)">📝 マイチャート</button>
+  <button class="back-btn" id="back-btn" onclick="goBack()">◀ 戻る</button>
+</div>
+
+<div class="tab-content active" id="tab-search">
+  <div class="header">
+    <div class="header-sub">Dragon Quest Monsters 2 SP</div>
+    <h1 onclick="goTop()">イルルカSP 配合チャート</h1>
+    <p>902体のモンスター情報を収録 — 配合元・入手方法を即座に確認</p>
+  </div>
+  <div class="search-page">
+    <div id="loading">データを読み込み中...</div>
+    <div id="search-main" style="display:none">
+      <div class="search-wrap">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="search-input" placeholder="モンスター名を入力（例：スライム、メタルキング）" autocomplete="off">
+      </div>
+      <div class="filter-row" id="family-filters"></div>
+      <div class="suggestions" id="suggestions"></div>
+      <div class="monster-card" id="monster-card"></div>
+      <div class="quick-section" id="quick-section">
+        <div class="quick-title">— ランク別モンスター —</div>
+        <div class="rank-tabs" id="rank-tabs"></div>
+        <div class="monster-grid" id="monster-grid"></div>
+        <button class="show-more" id="show-more-btn" onclick="toggleShowMore()">▼ もっと見る</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="tab-content" id="tab-list">
+  <div class="header">
+    <div class="header-sub">Monster List</div>
+    <h1>モンスター一覧</h1>
+    <p>位階順 — ランク・系統で絞り込み可能</p>
+  </div>
+  <div class="list-page">
+    <div class="list-controls">
+      <input type="text" id="list-search" placeholder="モンスター名で検索" oninput="renderList()" style="flex:1;min-width:120px;padding:8px 12px;border-radius:6px;border:1px solid var(--border);background:var(--bg2);color:var(--text);font-size:13px">
+      <select id="list-rank" onchange="renderList()">
+        <option value="">全ランク</option>
+        <option value="F">F</option><option value="E">E</option>
+        <option value="D">D</option><option value="C">C</option>
+        <option value="B">B</option><option value="A">A</option>
+        <option value="S">S</option><option value="SS">SS</option>
+      </select>
+      <select id="list-family" onchange="renderList()"><option value="">全系統</option></select>
+      <span class="list-count" id="list-count"></span>
+    </div>
+    <div class="list-grid" id="list-grid"></div>
+  </div>
+</div>
+
+<div class="tab-content" id="tab-chart">
+  <div class="chart-topbar">
+    <img class="ct-icon" id="chart-title-icon" src="" alt="">
+    <h2 id="chart-title-name">配合チャート</h2>
+    <div class="chart-legend">
+      <span class="legend-item"><span class="legend-dot" style="background:rgba(200,168,75,0.3);border-color:var(--gold)"></span>目標モンスター</span>
+      <span class="legend-item"><span class="legend-dot" style="background:rgba(16,185,129,0.15);border-color:#10b981"></span>スカウト可（末端）</span>
+      <span class="legend-item"><span class="legend-dot" style="background:rgba(107,79,160,0.15);border-color:var(--purple2)"></span>4体配合</span>
+      <span class="legend-item"><span class="legend-dot" style="background:rgba(16,185,129,0.22);border-color:rgba(16,185,129,0.9)"></span>✓ 入手済み</span>
+      <span style="font-size:10px;color:var(--text2);margin-left:8px">右クリックで入手済みマーク／＋－で配合元の表示切替（Ctrlで一括）／↗で別モンスターのチャートへ</span>
+    </div>
+  </div>
+  <div class="chart-canvas-wrap" id="chart-canvas-wrap">
+    <canvas id="chart-canvas"></canvas>
+    <div class="chart-zoom-btns">
+      <button class="chart-zoom-btn" onclick="zoomChart(1.2)" title="拡大">＋</button>
+      <button class="chart-zoom-btn" onclick="zoomChart(1/1.2)" title="縮小">－</button>
+      <button class="chart-zoom-btn" onclick="zoomChart(0)" title="リセット">⊙</button>
+    </div>
+  </div>
+  <div class="ct-tooltip" id="ct-tooltip">
+    <div class="tt-name" id="tt-name"></div>
+    <div class="tt-info" id="tt-info"></div>
+  </div>
+</div>
+<div class="tab-content" id="tab-favorites">
+  <div class="header">
+    <div class="header-sub">Favorites</div>
+    <h1>お気に入り</h1>
+    <p>お気に入り登録したモンスターの一覧</p>
+  </div>
+  <div class="fav-page">
+    <div id="fav-grid-wrap"></div>
+  </div>
+</div>
+<div class="tab-content" id="tab-mychart">
+  <div class="header">
+    <div class="header-sub">My Recipe Chart</div>
+    <h1>マイチャート</h1>
+    <p>自分だけの配合チャートを作成・保存</p>
+  </div>
+  <div class="mychart-page">
+    <!-- リスト画面 -->
+    <div id="mc-list-view">
+      <div class="mychart-list-header">
+        <h2>チャート一覧</h2>
+        <button class="mc-new-btn" onclick="mcNewChart()">＋ 新しいチャート</button>
+      </div>
+      <div id="mc-chart-list" class="mc-chart-list">
+        <div class="mc-empty">チャートがまだありません。<br>「＋ 新しいチャート」から作成してください。</div>
+      </div>
+    </div>
+    <!-- エディタ画面 -->
+    <div id="mc-editor-view" class="mc-editor">
+      <div class="mc-editor-header">
+        <button class="mc-back-list-btn" onclick="mcBackToList()">◀ 一覧へ</button>
+        <input type="text" id="mc-chart-name" placeholder="チャート名（例：メタルキング配合）" oninput="mcAutoSave()">
+        <button class="mc-save-btn" onclick="mcSave()">💾 保存</button>
+      </div>
+      <div class="mc-tree-wrap" id="mc-tree-wrap">
+        <div class="mc-tree" id="mc-tree"></div>
+      </div>
+      <div class="mc-memo-wrap">
+        <div class="mc-memo-label">メモ</div>
+        <textarea class="mc-memo-textarea" id="mc-memo" placeholder="配合の手順・メモを自由に入力..." oninput="mcAutoSave()"></textarea>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- モンスター選択モーダル -->
+<div class="mc-modal-overlay" id="mc-modal-overlay" onclick="mcModalClose(event)">
+  <div class="mc-modal">
+    <div class="mc-modal-head">
+      <input type="text" id="mc-modal-search" placeholder="モンスター名で検索" oninput="mcModalFilter()">
+      <button class="mc-modal-close" onclick="mcCloseModal()">✕</button>
+    </div>
+    <div class="mc-modal-filters" id="mc-modal-filters"></div>
+    <div class="mc-modal-grid" id="mc-modal-grid"></div>
+  </div>
+</div>
+
+
+<script src="script.js"></script>
+</body>
+</html>
