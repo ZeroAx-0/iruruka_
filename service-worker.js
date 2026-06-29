@@ -1,4 +1,4 @@
-const CACHE_NAME = "iruluka-v5";
+const CACHE_NAME = "iruluka-v6";
 
 self.addEventListener("install", event => {
   event.waitUntil(
@@ -10,6 +10,8 @@ self.addEventListener("install", event => {
         "./index.html",
         "./monsters_merged.json",
         "./manifest.json",
+        "./script.js",
+        "./style.css",
         "./icons/icon-192.png",
         "./icons/icon-512.png"
       ]);
